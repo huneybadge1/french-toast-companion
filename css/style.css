@@ -1,0 +1,579 @@
+:root {
+  --bg: #1c1712;
+  --bg-elevated: #33271c;
+  --accent: #e8a33d;        /* syrup gold */
+  --accent-2: #c8622d;      /* cinnamon */
+  --text: #f6f0e6;
+  --text-dim: #a99a86;
+  --danger: #e8563d;
+  --safe-green: #4bbf7b;
+  --radius: 16px;
+
+  /* Hint Scale slot tints, IS (0) -> IS NOT (5) */
+  --slot-0: rgba(75, 191, 123, 0.24);
+  --slot-1: rgba(150, 199, 92, 0.22);
+  --slot-2: rgba(214, 199, 88, 0.20);
+  --slot-3: rgba(224, 163, 70, 0.20);
+  --slot-4: rgba(224, 118, 66, 0.22);
+  --slot-5: rgba(224, 78, 70, 0.24);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Warm breakfast-sunrise wash: golden light, berry compote, cinnamon —
+     deliberately more colourful and nothing like the Catchphrase app. */
+  background:
+    radial-gradient(135% 115% at 88% 0%, rgba(240, 176, 74, 0.34), transparent 55%),
+    radial-gradient(125% 125% at 4% 100%, rgba(158, 46, 84, 0.34), transparent 55%),
+    radial-gradient(100% 90% at 50% 118%, rgba(206, 100, 46, 0.30), transparent 60%),
+    linear-gradient(165deg, #251a10 0%, #1b1410 52%, #241528 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  /* Rounded, friendly type — deliberately unlike the plain sans of the
+     Catchphrase app; these are different games. */
+  font-family: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN",
+    "Nunito", "Quicksand", "Segoe UI", Roboto, system-ui, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+#app { width: 100%; height: 100%; height: 100dvh; }
+
+.screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  position: relative;
+}
+
+.screen[hidden] { display: none; }
+
+/* ---------- Setup ---------- */
+#screen-setup { gap: 4px; padding: 12px 18px; }
+
+.app-title {
+  font-size: clamp(1.9rem, 6vw, 3rem);
+  font-weight: 800;
+  margin: 0 0 2px;
+  letter-spacing: -0.015em;
+  color: var(--accent);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: clamp(0.85rem, 2vw, 1.1rem);
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.setup-decks {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 6px 0 12px;
+}
+
+.deck-btn {
+  background: var(--bg-elevated);
+  border: 2px solid var(--text-dim);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 20px 24px;
+  min-width: 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.deck-btn:active { border-color: var(--accent); background: #33281d; }
+
+.deck-name { font-size: 1.3rem; font-weight: 800; }
+.deck-sub { font-size: 0.78rem; color: var(--text-dim); }
+
+.hint {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  text-align: center;
+  max-width: 520px;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.setup-status {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  margin: 10px 0 0;
+  min-height: 1em;
+}
+
+.setup-status.error { color: var(--danger); }
+
+/* ---------- Game: group display ---------- */
+#screen-game { justify-content: flex-start; gap: 10px; padding: 10px 14px 12px; }
+
+/* A little extra griddle-warmth right behind the Hint Scale. */
+#screen-game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(115% 70% at 50% 42%, rgba(240, 178, 78, 0.12), transparent 62%);
+  pointer-events: none;
+}
+#screen-game > * { position: relative; }
+
+/* Round label pinned left, timer dead-centre so it never collides with
+   the fixed Quit button in the top-right corner. */
+.group-display {
+  position: relative;
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.round-indicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: clamp(0.9rem, 2.6vw, 1.35rem);
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+.round-indicator span { color: var(--text); }
+
+.timer {
+  font-size: clamp(2.2rem, 8vw, 4rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.timer.low { color: var(--danger); animation: timer-pulse 1s ease-in-out infinite; }
+
+@keyframes timer-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.75; }
+}
+
+/* ---------- Game: the Hint Scale (centerpiece) ---------- */
+.scale {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.scale-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: clamp(0.8rem, 2.4vw, 1.3rem);
+  letter-spacing: 0.04em;
+  color: var(--text);
+  padding: 0 2px;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.scale-end-is { color: var(--safe-green); }
+.scale-end-isnot { color: var(--danger); }
+
+.scale-track {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.slot {
+  position: relative;
+  border-radius: 14px;
+  border: 2px dashed rgba(255, 255, 255, 0.16);
+  /* A consistent dark card so the tint + gradient read the same over the
+     colourful page background. */
+  background: rgba(18, 13, 9, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.slot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--slot-tint, transparent);
+  pointer-events: none;
+}
+
+.slot:nth-child(1) { --slot-tint: var(--slot-0); }
+.slot:nth-child(2) { --slot-tint: var(--slot-1); }
+.slot:nth-child(3) { --slot-tint: var(--slot-2); }
+.slot:nth-child(4) { --slot-tint: var(--slot-3); }
+.slot:nth-child(5) { --slot-tint: var(--slot-4); }
+.slot:nth-child(6) { --slot-tint: var(--slot-5); }
+
+.slot.filled {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.slot-chip {
+  position: relative;
+  display: block;
+  min-width: 0;      /* let the flex item wrap instead of forcing slot width */
+  max-width: 100%;
+  text-align: center;
+  font-weight: 800;
+  line-height: 1.14;
+  /* font-size is set by fitChip() in app.js so long adjectives wrap to two
+     lines at a readable size rather than clipping or shrinking to nothing. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: none;
+}
+
+/* When a hint is "in hand", open slots invite a tap. */
+.scale-track.placing .slot:not(.filled) {
+  border-color: var(--accent);
+  animation: slot-glow 1.1s ease-in-out infinite;
+  cursor: pointer;
+}
+
+@keyframes slot-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 163, 61, 0.0); }
+  50% { box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer.low, .scale-track.placing .slot:not(.filled) { animation: none; }
+}
+
+/* ---------- Game: Toastmaster strip ---------- */
+.tm-reminder {
+  width: 100%;
+  max-width: 620px;
+  background: rgba(232, 163, 61, 0.14);
+  border: 1px solid rgba(232, 163, 61, 0.4);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.tm-reminder[hidden] { display: none; }
+
+.tm-reminder button {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 2px 6px;
+}
+
+.tm-status {
+  width: 100%;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  min-height: 1.1em;
+  margin: 0;
+}
+
+.tm-status strong { color: var(--accent); }
+
+.tm-controls {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+
+.tm-btn {
+  flex: 1;
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 2px solid var(--text-dim);
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: clamp(0.85rem, 2.3vw, 1.15rem);
+  padding: 14px 6px;
+  min-height: 54px;
+}
+
+.tm-btn:active { filter: brightness(1.25); }
+.tm-btn:disabled { opacity: 0.28; filter: grayscale(0.45); }
+.tm-btn[hidden] { display: none; }
+
+.tm-btn-go { background: var(--accent); border-color: var(--accent); color: #241a0c; }
+.tm-btn-win { background: var(--safe-green); border-color: var(--safe-green); color: #08210f; }
+
+/* ---------- End screens ---------- */
+.end-emoji { font-size: 3.6rem; margin-bottom: 6px; }
+
+.end-title {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  margin: 4px 0 8px;
+  text-align: center;
+}
+
+.end-detail {
+  color: var(--text-dim);
+  max-width: 440px;
+  text-align: center;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+/* ---------- Shared buttons ---------- */
+.btn-primary {
+  background: var(--accent);
+  color: #241a0c;
+  border: none;
+  border-radius: var(--radius);
+  font-size: clamp(1.05rem, 2.5vw, 1.4rem);
+  font-weight: 800;
+  padding: 18px 34px;
+  min-height: 60px;
+}
+
+.btn-primary:active { filter: brightness(0.88); }
+
+.btn-secondary {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 2px solid var(--text-dim);
+  border-radius: var(--radius);
+  font-size: clamp(1rem, 2.3vw, 1.3rem);
+  font-weight: 700;
+  padding: 16px 28px;
+  min-height: 56px;
+  margin-bottom: 12px;
+}
+
+.btn-secondary:active { filter: brightness(1.2); }
+
+/* ---------- Version badge / quit ---------- */
+.version-badge {
+  position: fixed;
+  bottom: 8px;
+  left: 10px;
+  z-index: 500;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn-quit {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 500;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 7px 12px;
+}
+
+.btn-quit:active { background: var(--danger); color: white; }
+.btn-quit[hidden] { display: none; }
+.btn-quit.armed { background: var(--danger); color: white; }
+
+/* ---------- Shielded reveal ---------- */
+.shield-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.shield-overlay[hidden] { display: none; }
+
+.shield-warn {
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.shield-word {
+  font-size: clamp(2.4rem, 12vw, 6rem);
+  font-weight: 800;
+  margin: 14px 0;
+  line-height: 1.05;
+  word-break: break-word;
+}
+
+.shield-hint { color: var(--text-dim); font-size: 0.85rem; margin: 0; }
+
+/* ---------- Modals (custom word, hint deal) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modal-overlay[hidden] { display: none; }
+
+.modal-box {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 22px;
+  max-width: 440px;
+  width: 100%;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.modal-title { margin: 0; font-size: 1.25rem; text-align: center; }
+
+.modal-text {
+  margin: 0 0 4px;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.btn-modal { width: 100%; }
+
+.btn-modal-cancel {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  padding: 8px;
+}
+
+.custom-input {
+  width: 100%;
+  background: var(--bg);
+  border: 2px solid var(--text-dim);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 14px 12px;
+}
+
+.custom-input:focus { outline: none; border-color: var(--accent); }
+
+.deal-choices { display: flex; flex-direction: column; gap: 10px; }
+
+.deal-choice {
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  color: var(--text);
+  border-radius: 14px;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: 800;
+  padding: 20px 16px;
+}
+
+.deal-choice:active { background: var(--accent); color: #241a0c; }
+
+/* ---------- Rotate overlay ---------- */
+.rotate-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  text-align: center;
+  padding: 24px;
+}
+
+.rotate-overlay[hidden] { display: none; }
+
+.rotate-overlay p { max-width: 320px; color: var(--text-dim); }
+
+.rotate-icon {
+  font-size: 3.6rem;
+  margin-bottom: 14px;
+  animation: rotate-hint 1.6s ease-in-out infinite;
+}
+
+@keyframes rotate-hint {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotate-icon { animation: none; }
+}
+
+/* ---------- Short landscape phones ---------- */
+@media (orientation: landscape) and (max-height: 430px) {
+  #screen-game { gap: 6px; padding: 6px 12px 8px; }
+  .timer { font-size: clamp(1.8rem, 7vw, 3rem); }
+  .tm-btn { min-height: 46px; padding: 10px 4px; }
+  .slot-chip { font-size: clamp(0.75rem, 2.3vw, 1.2rem); }
+  .tm-reminder { padding: 6px 10px; font-size: 0.76rem; }
+  .btn-primary { min-height: 52px; padding: 14px 28px; }
+  .btn-secondary { min-height: 48px; padding: 12px 22px; }
+
+  .modal-box { padding: 16px; gap: 8px; }
+  .modal-title { font-size: 1.1rem; }
+  .modal-text { font-size: 0.8rem; }
+  .custom-input { font-size: 1.1rem; padding: 10px; }
+  .deal-choice { font-size: clamp(1.1rem, 4vw, 1.5rem); padding: 14px; }
+  .end-emoji { font-size: 2.6rem; margin-bottom: 2px; }
+  .end-title { font-size: clamp(1.5rem, 5vw, 2rem); margin: 2px 0 6px; }
+  .end-detail { margin-bottom: 12px; }
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#1c1712" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="French Toast" />
+<title>French Toast</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" href="icons/favicon-32.png" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- Rotate overlay: shown whenever the device is in portrait -->
+<div id="rotate-overlay" class="rotate-overlay" hidden>
+  <div class="rotate-icon">&#128241;</div>
+  <p>Turn the phone sideways &mdash; the Hint Scale runs across the screen.</p>
+</div>
+
+<main id="app">
+
+  <!-- SETUP -->
+  <section id="screen-setup" class="screen">
+    <h1 class="app-title">French&nbsp;Toast</h1>
+    <p class="subtitle">Toastmaster &mdash; choose a word source</p>
+    <div class="setup-decks">
+      <button class="deck-btn" data-deck="basic">
+        <span class="deck-name">Basic</span>
+        <span class="deck-sub">everyday words</span>
+      </button>
+      <button class="deck-btn" data-deck="advanced">
+        <span class="deck-name">Advanced</span>
+        <span class="deck-sub">trickier words</span>
+      </button>
+      <button class="deck-btn" data-deck="custom">
+        <span class="deck-name">Your own</span>
+        <span class="deck-sub">type it in privately</span>
+      </button>
+    </div>
+    <p class="hint">Co-op &middot; 5 rounds &middot; 40&#8202;s each &middot; one hint on the scale per round. You call &ldquo;warmer / colder&rdquo; out loud &mdash; the app just holds the pieces.</p>
+    <p id="setup-status" class="setup-status">Loading word bank&hellip;</p>
+  </section>
+
+  <!-- GAME (one shared screen: group display + Toastmaster controls) -->
+  <section id="screen-game" class="screen" hidden>
+
+    <div class="group-display">
+      <div class="round-indicator">Round <span id="round-num">1</span> of 5</div>
+      <div id="timer" class="timer">40</div>
+    </div>
+
+    <div class="scale">
+      <div class="scale-end scale-end-is">IS</div>
+      <div class="scale-track" id="scale-track"><!-- 6 slots injected by JS --></div>
+      <div class="scale-end scale-end-isnot">IS&nbsp;NOT</div>
+    </div>
+
+    <div id="tm-reminder" class="tm-reminder" hidden>
+      <span>Announce &ldquo;French&nbsp;Toast&rdquo; aloud as the starting closest guess.</span>
+      <button id="tm-reminder-dismiss" aria-label="Dismiss reminder">&times;</button>
+    </div>
+
+    <p id="tm-status" class="tm-status"></p>
+
+    <div class="tm-controls">
+      <button id="btn-peek" class="tm-btn">Peek word</button>
+      <button id="btn-deal" class="tm-btn">Deal hints</button>
+      <button id="btn-start" class="tm-btn tm-btn-go" disabled>Start 40s</button>
+      <button id="btn-gotit" class="tm-btn tm-btn-win" hidden>They got it!</button>
+    </div>
+  </section>
+
+  <!-- WIN -->
+  <section id="screen-win" class="screen" hidden>
+    <div class="end-emoji">&#127857;</div>
+    <h2 class="end-title">They got it!</h2>
+    <p id="win-detail" class="end-detail"></p>
+    <button id="btn-win-reveal" class="btn-secondary" data-hold-reveal>Hold to show the word</button>
+    <button id="btn-win-again" class="btn-primary">New game</button>
+  </section>
+
+  <!-- LOSS -->
+  <section id="screen-loss" class="screen" hidden>
+    <div class="end-emoji">&#9203;</div>
+    <h2 class="end-title">Out of rounds</h2>
+    <p class="end-detail">Five hints placed, no correct guess. The word was&hellip;</p>
+    <button id="btn-loss-reveal" class="btn-secondary" data-hold-reveal>Hold to show the word</button>
+    <button id="btn-loss-again" class="btn-primary">New game</button>
+  </section>
+
+</main>
+
+<div id="version-badge" class="version-badge" aria-hidden="true"></div>
+<button id="btn-quit" class="btn-quit" hidden>Quit</button>
+
+<!-- Shielded reveal: the secret word (press-and-hold) -->
+<div id="peek-overlay" class="shield-overlay" hidden>
+  <p class="shield-warn">Shield the screen</p>
+  <div id="peek-word" class="shield-word"></div>
+  <p class="shield-hint">Release to hide</p>
+</div>
+
+<!-- Shielded panel: custom word entry -->
+<div id="custom-overlay" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <h3 class="modal-title">Type your secret word</h3>
+    <p class="modal-text">Keep it shielded from the group. A single noun works best.</p>
+    <input id="custom-input" class="custom-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="secret word" />
+    <button id="btn-custom-ok" class="btn-primary btn-modal">Use this word</button>
+    <button id="btn-custom-cancel" class="btn-modal-cancel">Back</button>
+  </div>
+</div>
+
+<!-- Shielded panel: hint deal -->
+<div id="deal-overlay" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <h3 class="modal-title">Keep one hint</h3>
+    <p class="modal-text">Shield the screen. Tap the adjective you&rsquo;ll place &mdash; the other is discarded.</p>
+    <div class="deal-choices">
+      <button id="deal-a" class="deal-choice"></button>
+      <button id="deal-b" class="deal-choice"></button>
+    </div>
+    <button id="btn-deal-cancel" class="btn-modal-cancel">Not yet &mdash; put them back</button>
+  </div>
+</div>
+
+<script src="js/version.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data.js"></script>
+<script src="js/scale.js"></script>
+<script src="js/game.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
