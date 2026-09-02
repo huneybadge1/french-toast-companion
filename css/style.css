@@ -190,48 +190,46 @@ html, body {
   flex: 1;
   min-height: 0;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
   /* A defined panel so the scale reads as one object on the busy page. */
   background: rgba(10, 7, 5, 0.66);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
-  padding: 12px 14px 14px;
+  padding: 12px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 34px rgba(0, 0, 0, 0.45);
 }
 
-.scale-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
+/* IS / IS NOT sit at the far left and right of the scale, vertically
+   centred. The panel padding + the screen's safe-area padding keep them
+   clear of a notch. */
 .scale-end {
-  font-weight: 800;
-  font-size: clamp(1rem, 3.4vw, 1.7rem);
-  letter-spacing: 0.03em;
-  padding: 4px 16px;
-  border-radius: 999px;
-  line-height: 1.2;
   flex: 0 0 auto;
+  align-self: center;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: clamp(0.95rem, 3vw, 1.6rem);
+  letter-spacing: 0.03em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  line-height: 1.1;
 }
 
 .scale-end-is { color: #06210f; background: var(--safe-green); }
 .scale-end-isnot { color: #2a0b06; background: var(--danger); }
 
-.scale-caption {
-  color: var(--text-dim);
-  font-size: clamp(0.7rem, 2vw, 0.9rem);
-  font-weight: 600;
-  text-align: center;
-  flex: 1 1 auto;
+.scale-mid {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Continuous IS -> IS NOT spectrum so the direction reads before any hint. */
 .scale-spectrum {
-  height: 10px;
+  height: 9px;
   border-radius: 999px;
   background: linear-gradient(90deg,
     #4bbf7b 0%, #9ec95c 22%, #d8c85a 44%, #e6a343 66%, #e57a42 84%, #e5493e 100%);
@@ -615,9 +613,9 @@ html, body {
   }
   .timer { font-size: clamp(1.8rem, 7vw, 3rem); }
   .tm-btn { min-height: 46px; padding: 10px 4px; }
-  .scale { padding: 8px 10px 10px; border-radius: 16px; }
+  .scale { padding: 8px; border-radius: 16px; gap: 7px; }
   .scale-spectrum { height: 7px; }
-  .scale-end { font-size: clamp(0.85rem, 3vw, 1.3rem); padding: 3px 12px; }
+  .scale-end { font-size: clamp(0.85rem, 3vw, 1.3rem); padding: 4px 10px; }
   .tm-reminder { padding: 6px 10px; font-size: 0.76rem; }
   .btn-primary { min-height: 52px; padding: 14px 28px; }
   .btn-secondary { min-height: 48px; padding: 12px 22px; }
