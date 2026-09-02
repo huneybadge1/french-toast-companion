@@ -10,12 +10,12 @@
   --radius: 16px;
 
   /* Hint Scale slot tints, IS (0) -> IS NOT (5) */
-  --slot-0: rgba(75, 191, 123, 0.24);
-  --slot-1: rgba(150, 199, 92, 0.22);
-  --slot-2: rgba(214, 199, 88, 0.20);
-  --slot-3: rgba(224, 163, 70, 0.20);
-  --slot-4: rgba(224, 118, 66, 0.22);
-  --slot-5: rgba(224, 78, 70, 0.24);
+  --slot-0: rgba(75, 191, 123, 0.40);
+  --slot-1: rgba(146, 199, 92, 0.36);
+  --slot-2: rgba(214, 199, 88, 0.34);
+  --slot-3: rgba(226, 160, 68, 0.36);
+  --slot-4: rgba(228, 116, 64, 0.38);
+  --slot-5: rgba(230, 78, 66, 0.42);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -53,7 +53,11 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 18px;
+  /* Stay clear of notches / rounded corners in landscape (viewport-fit=cover). */
+  padding: max(18px, env(safe-area-inset-top))
+           max(18px, env(safe-area-inset-right))
+           max(18px, env(safe-area-inset-bottom))
+           max(18px, env(safe-area-inset-left));
   position: relative;
 }
 
@@ -123,7 +127,14 @@ html, body {
 .setup-status.error { color: var(--danger); }
 
 /* ---------- Game: group display ---------- */
-#screen-game { justify-content: flex-start; gap: 10px; padding: 10px 14px 12px; }
+#screen-game {
+  justify-content: flex-start;
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top))
+           max(16px, env(safe-area-inset-right))
+           max(12px, env(safe-area-inset-bottom))
+           max(16px, env(safe-area-inset-left));
+}
 
 /* A little extra griddle-warmth right behind the Hint Scale. */
 #screen-game::before {
@@ -179,28 +190,57 @@ html, body {
   flex: 1;
   min-height: 0;
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
+  /* A defined panel so the scale reads as one object on the busy page. */
+  background: rgba(10, 7, 5, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 12px 14px 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 34px rgba(0, 0, 0, 0.45);
+}
+
+.scale-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .scale-end {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-weight: 800;
-  font-size: clamp(0.8rem, 2.4vw, 1.3rem);
-  letter-spacing: 0.04em;
-  color: var(--text);
-  padding: 0 2px;
+  font-size: clamp(1rem, 3.4vw, 1.7rem);
+  letter-spacing: 0.03em;
+  padding: 4px 16px;
+  border-radius: 999px;
+  line-height: 1.2;
   flex: 0 0 auto;
-  text-align: center;
 }
 
-.scale-end-is { color: var(--safe-green); }
-.scale-end-isnot { color: var(--danger); }
+.scale-end-is { color: #06210f; background: var(--safe-green); }
+.scale-end-isnot { color: #2a0b06; background: var(--danger); }
+
+.scale-caption {
+  color: var(--text-dim);
+  font-size: clamp(0.7rem, 2vw, 0.9rem);
+  font-weight: 600;
+  text-align: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Continuous IS -> IS NOT spectrum so the direction reads before any hint. */
+.scale-spectrum {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #4bbf7b 0%, #9ec95c 22%, #d8c85a 44%, #e6a343 66%, #e57a42 84%, #e5493e 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
 
 .scale-track {
   flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 8px;
@@ -209,14 +249,14 @@ html, body {
 .slot {
   position: relative;
   border-radius: 14px;
-  border: 2px dashed rgba(255, 255, 255, 0.16);
-  /* A consistent dark card so the tint + gradient read the same over the
-     colourful page background. */
-  background: rgba(18, 13, 9, 0.42);
+  border: 2px dashed rgba(255, 255, 255, 0.28);
+  background: rgba(18, 13, 9, 0.5);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  gap: 5px;
+  padding: 8px 6px;
   overflow: hidden;
   text-align: center;
 }
@@ -238,39 +278,45 @@ html, body {
 
 .slot.filled {
   border-style: solid;
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(0, 0, 0, 0.25);
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 .slot-chip {
   position: relative;
   display: block;
-  min-width: 0;      /* let the flex item wrap instead of forcing slot width */
+  min-width: 0;
   max-width: 100%;
   text-align: center;
   font-weight: 800;
   line-height: 1.14;
-  /* font-size is set by fitChip() in app.js so long adjectives wrap to two
-     lines at a readable size rather than clipping or shrinking to nothing. */
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.42);
+  border-radius: 9px;
+  padding: 5px 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  /* font-size is set by fitSlotChips() in app.js */
   overflow-wrap: anywhere;
   word-break: break-word;
   hyphens: none;
 }
 
-/* When a hint is "in hand", open slots invite a tap. */
-.scale-track.placing .slot:not(.filled) {
+/* When a hint is "in hand", every position invites a tap (any position can
+   hold any number of hints). */
+.scale-track.placing .slot {
   border-color: var(--accent);
+  border-style: solid;
   animation: slot-glow 1.1s ease-in-out infinite;
   cursor: pointer;
 }
 
 @keyframes slot-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232, 163, 61, 0.0); }
-  50% { box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.45); }
+  50% { box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.5); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .timer.low, .scale-track.placing .slot:not(.filled) { animation: none; }
+  .timer.low, .scale-track.placing .slot { animation: none; }
 }
 
 /* ---------- Game: Toastmaster strip ---------- */
@@ -384,8 +430,8 @@ html, body {
 /* ---------- Version badge / quit ---------- */
 .version-badge {
   position: fixed;
-  bottom: 8px;
-  left: 10px;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  left: max(10px, env(safe-area-inset-left));
   z-index: 500;
   color: var(--text-dim);
   font-size: 0.68rem;
@@ -396,8 +442,8 @@ html, body {
 
 .btn-quit {
   position: fixed;
-  top: 10px;
-  right: 10px;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
   z-index: 500;
   border: none;
   border-radius: 10px;
@@ -560,10 +606,18 @@ html, body {
 
 /* ---------- Short landscape phones ---------- */
 @media (orientation: landscape) and (max-height: 430px) {
-  #screen-game { gap: 6px; padding: 6px 12px 8px; }
+  #screen-game {
+    gap: 6px;
+    padding: max(6px, env(safe-area-inset-top))
+             max(12px, env(safe-area-inset-right))
+             max(8px, env(safe-area-inset-bottom))
+             max(12px, env(safe-area-inset-left));
+  }
   .timer { font-size: clamp(1.8rem, 7vw, 3rem); }
   .tm-btn { min-height: 46px; padding: 10px 4px; }
-  .slot-chip { font-size: clamp(0.75rem, 2.3vw, 1.2rem); }
+  .scale { padding: 8px 10px 10px; border-radius: 16px; }
+  .scale-spectrum { height: 7px; }
+  .scale-end { font-size: clamp(0.85rem, 3vw, 1.3rem); padding: 3px 12px; }
   .tm-reminder { padding: 6px 10px; font-size: 0.76rem; }
   .btn-primary { min-height: 52px; padding: 14px 28px; }
   .btn-secondary { min-height: 48px; padding: 12px 22px; }

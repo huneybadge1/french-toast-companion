@@ -39,8 +39,9 @@
     btnDealCancel: $("btn-deal-cancel")
   };
 
-  // pending: the hint currently "in hand". fromSlot null = freshly dealt
-  // (must be placed to arm Start); a number = lifted from that slot.
+  // pending: the hint currently "in hand" — { text, fresh }. fresh:true is
+  // this round's freshly-dealt hint (must be placed to arm Start); fresh:false
+  // is a placed hint lifted to be moved.
   let pending = null;
   let dealtPair = null;
   let reminderShown = false;
@@ -141,58 +142,65 @@
   }
 
   function renderScale() {
-    const slots = HintScale.all();
     els.scaleTrack.classList.toggle("placing", !!pending);
     els.scaleTrack.innerHTML = "";
-    slots.forEach((text, i) => {
+    for (let i = 0; i < HintScale.SLOTS; i++) {
+      const items = HintScale.bySlot(i);
       const slot = document.createElement("div");
-      slot.className = "slot" + (text ? " filled" : "");
+      slot.className = "slot" + (items.length ? " filled" : "");
       slot.dataset.slot = String(i);
-      if (text) {
+      if (items.length > 1) slot.classList.add("stacked");
+      items.forEach((item) => {
         const chip = document.createElement("span");
         chip.className = "slot-chip";
-        chip.textContent = text;
+        chip.dataset.id = String(item.id);
+        chip.textContent = item.text;
         slot.appendChild(chip);
-      }
+      });
       els.scaleTrack.appendChild(slot);
-    });
-    // Shrink each hint until it fits its slot on one or two lines — long
-    // adjectives ("transparent", "complicated") must never break mid-word.
-    els.scaleTrack.querySelectorAll(".slot-chip").forEach(fitChip);
+    }
+    els.scaleTrack.querySelectorAll(".slot").forEach(fitSlotChips);
   }
 
-  // Long adjectives wrap to 2-3 lines (word-break in CSS); this only pulls
-  // the size down further if the wrapped text is still taller than the slot.
-  function fitChip(chip) {
-    const maxH = chip.parentElement.clientHeight - 16;
-    let size = 21;
-    chip.style.fontSize = size + "px";
-    while (size > 11 && chip.scrollHeight > maxH) {
+  // Size every chip in a slot so the (possibly stacked) column fits. Long
+  // adjectives wrap rather than break mid-word (CSS); this shrinks further
+  // only if the column is still taller than the slot.
+  function fitSlotChips(slot) {
+    const chips = slot.querySelectorAll(".slot-chip");
+    if (!chips.length) return;
+    const n = chips.length;
+    let size = n === 1 ? 21 : n === 2 ? 16 : 13;
+    const apply = () => chips.forEach((c) => (c.style.fontSize = size + "px"));
+    apply();
+    let guard = 0;
+    while (size > 9 && slot.scrollHeight > slot.clientHeight && guard++ < 24) {
       size -= 1;
-      chip.style.fontSize = size + "px";
+      apply();
     }
   }
 
   els.scaleTrack.addEventListener("click", (e) => {
+    if (Game.getPhase() === "running") return; // hints locked during countdown
     const slotEl = e.target.closest(".slot");
     if (!slotEl) return;
-    if (Game.getPhase() === "running") return; // hints locked during countdown
     const idx = Number(slotEl.dataset.slot);
-    const occupied = !HintScale.isEmpty(idx);
 
     if (pending) {
-      if (occupied) return; // can only drop on an open slot
-      HintScale.place(idx, pending.text);
-      const wasFresh = pending.fromSlot === null;
+      // Drop into this position — any position accepts any number of hints.
+      HintScale.add(idx, pending.text);
+      const wasFresh = pending.fresh;
       pending = null;
       if (wasFresh) {
         Game.setPhase("ready");
         maybeShowReminder();
       }
     } else {
-      if (!occupied) return; // nothing to pick up
-      pending = { text: HintScale.get(idx), fromSlot: idx };
-      HintScale.lift(idx);
+      // Lift the specific hint that was tapped, to move it.
+      const chipEl = e.target.closest(".slot-chip");
+      if (!chipEl) return;
+      const item = HintScale.take(Number(chipEl.dataset.id));
+      if (!item) return;
+      pending = { text: item.text, fresh: false };
     }
     renderScale();
     updateControls();
@@ -213,7 +221,7 @@
     const chosen = which === "a" ? dealtPair[0] : dealtPair[1];
     dealtPair = null;
     els.dealOverlay.hidden = true;
-    pending = { text: chosen, fromSlot: null };
+    pending = { text: chosen, fresh: true };
     Game.setPhase("place");
     renderScale();
     updateControls();
@@ -232,6 +240,7 @@
     if (Game.getPhase() !== "ready") return;
     GameAudio.unlock();
     els.tmReminder.hidden = true;
+    acquireWakeLock(); // keep the screen on while the phone sits on the table
     Game.startTimer(onTick, onRoundEnd);
     updateControls();
   });
@@ -239,10 +248,29 @@
   els.btnGotit.addEventListener("click", () => {
     if (Game.getPhase() !== "running") return;
     Game.win();
+    releaseWakeLock();
     GameAudio.win();
     if (navigator.vibrate) navigator.vibrate(120);
     showWin();
   });
+
+  /* ---------- screen wake lock (running rounds only) ---------- */
+
+  let wakeLock = null;
+  async function acquireWakeLock() {
+    if (!("wakeLock" in navigator) || wakeLock) return;
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } catch (e) {
+      wakeLock = null; // denied / unsupported / not visible — the round just runs without it
+    }
+  }
+  function releaseWakeLock() {
+    if (!wakeLock) return;
+    try { wakeLock.release(); } catch (e) { /* no-op */ }
+    wakeLock = null;
+  }
 
   function onTick(sec) {
     els.timer.textContent = sec;
@@ -251,6 +279,7 @@
   }
 
   function onRoundEnd() {
+    releaseWakeLock();
     GameAudio.buzzer();
     if (navigator.vibrate) navigator.vibrate([220, 90, 220]);
     els.timer.classList.add("low");
@@ -264,7 +293,7 @@
   }
 
   function showWin() {
-    const n = HintScale.placedCount();
+    const n = HintScale.count();
     els.winDetail.textContent =
       `Guessed on round ${Game.getRound()} of ${Game.ROUNDS} · ${n} hint${n === 1 ? "" : "s"} on the scale.`;
     show(els.screenWin);
@@ -279,6 +308,7 @@
 
   function backToSetup() {
     Game.stopTimer();
+    releaseWakeLock();
     HintScale.reset();
     pending = null;
     dealtPair = null;
@@ -380,7 +410,13 @@
   checkOrientation();
 
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) Game.pause();
-    else Game.resume();
+    if (document.hidden) {
+      Game.pause();
+    } else {
+      Game.resume();
+      // Wake locks drop when the page is hidden — take it again if a round
+      // is still running.
+      if (Game.getPhase() === "running") acquireWakeLock();
+    }
   });
 })();

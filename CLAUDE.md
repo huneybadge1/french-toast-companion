@@ -19,9 +19,11 @@ them visually and aurally distinct.**
 - **5 rounds** (retail 6).
 - Each round the Toastmaster is dealt **2** hint adjectives, keeps **1**,
   discards the other (retail deals 6).
-- **6-position** IS ↔ IS NOT scale; the game ends after the **5th** hint is
-  placed, leaving one slot open.
+- **6-position** IS ↔ IS NOT scale. **Multiple hints may share a position**
+  (house change from the printed rules and the original build brief — the
+  user asked for this). The game ends after round 5.
 - Custom-word option: the Toastmaster may type their own secret word.
+- The screen is kept awake (Wake Lock API) while a round's timer runs.
 
 ## Deploy workflow (every change follows this)
 
@@ -76,15 +78,19 @@ on `body` (`background-attachment: fixed`). Custom toast-slice app icon
 - `js/version.js` — `APP_VERSION`, loaded first.
 - `js/data.js` — `GameData`: loads `french-toast-words.json`, draws a secret
   word per game (no session repeats), deals 2 hints/round without repeats.
-- `js/scale.js` — `HintScale`: 6-slot state, `place` / `lift` (never
-  removes a placed hint), `placedCount`.
+- `js/scale.js` — `HintScale`: holds `[{id,text,slot}]` items; `add(slot,
+  text)`, `take(id)` (lift for a move), `bySlot(slot)`, `count()`. Any
+  number of hints per position; a hint is never truly removed (a move is
+  take + add).
 - `js/game.js` — `Game`: 5-round / 40s state machine, phases
   `deal → place → ready → running → won|lost`, timer that pauses
   preserving exact remaining time (portrait rotate + tab backgrounding).
 - `js/app.js` — DOM wiring (IIFE, `els` caches refs by id). `pending` holds
-  the hint "in hand"; tap an open slot to drop, tap a placed hint to lift.
-  `fitChip()` scales hint text so long adjectives wrap instead of clipping.
-  Registers the SW + `controllerchange` one-time reload. Two-tap Quit.
+  the hint "in hand" (`{text, fresh}`); tap any position to drop, tap a
+  placed chip to lift it for a move. `fitSlotChips()` sizes a position's
+  (possibly stacked) chips to fit. Wake Lock acquired on Start, released on
+  round end / win / quit, re-acquired on `visibilitychange`. Registers the
+  SW + `controllerchange` one-time reload. Two-tap Quit.
 - `sw.js` — cache-first service worker, `importScripts` the version.
 - `french-toast-words.json` — `secretWords.basic` / `secretWords.advanced`
   (single-noun words) + `hints` (versatile adjectives). Lowercase,
