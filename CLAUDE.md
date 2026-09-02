@@ -24,6 +24,10 @@ them visually and aurally distinct.**
   user asked for this). The game ends after round 5.
 - Custom-word option: the Toastmaster may type their own secret word.
 - The screen is kept awake (Wake Lock API) while a round's timer runs.
+- **Multi-screen (beta):** two phones can pair so the scale spans both —
+  positions 1-3 + controls on the host, 4-6 + "IS NOT" on a display-only
+  mirror. Opt-in from the setup screen; solo play is the default and is
+  never touched by it. See the Multi-screen section below.
 
 ## Deploy workflow (every change follows this)
 
@@ -91,6 +95,16 @@ on `body` (`background-attachment: fixed`). Custom toast-slice app icon
   (possibly stacked) chips to fit. Wake Lock acquired on Start, released on
   round end / win / quit, re-acquired on `visibilitychange`. Registers the
   SW + `controllerchange` one-time reload. Two-tap Quit.
+- `js/link.js` — `GameLink`: the multi-screen transport. WebRTC data
+  channel (`RTCPeerConnection` with `iceServers: []` — LAN only, no
+  STUN/TURN); the SDP offer/answer handshake is deflated + base64url'd +
+  split into ~180-char frames, each shown as an animated QR. `createOffer`
+  / `acceptOffer` / `acceptAnswer` return/consume frame arrays; `feedScan`
+  collects scanned frames until a full payload arrives. Events: `on(
+  "state", fn)` ("connected"/"disconnected"), `on("message", fn)`.
+- `js/vendor/qrcode.js` (encode, ~20 KB min) + `js/vendor/jsQR.js`
+  (decode, ~130 KB min) — bundled so pairing works offline. Scanning
+  prefers the native `BarcodeDetector` and falls back to jsQR.
 - `sw.js` — cache-first service worker, `importScripts` the version.
 - `french-toast-words.json` — `secretWords.basic` / `secretWords.advanced`
   (single-noun words) + `hints` (versatile adjectives). Lowercase,
@@ -108,6 +122,26 @@ move previously placed hints) → Start → 40s countdown → round ends on
 **"They got it!"** (win, any round) or the buzzer (advance; after round 5 →
 loss). First round only: a dismissible Toastmaster-side reminder to say
 "French Toast" as the opening guess (not on the group display).
+
+## Multi-screen (beta)
+
+- `mode` in `app.js` is `"solo"` (default) | `"host"` | `"mirror"`.
+  `body.ms-host` / `body.ms-mirror` drive the split-scale CSS. `HOST_SPLIT
+  = 3`: positions 0-2 render in `#scale-track` on the host, 3-5 in the
+  compact `#screen2-strip`; the mirror renders 3-5 in `#mirror-track`.
+- Pairing flow: setup screen → "Two screens" → pick left/right → QR show /
+  QR scan (camera) → linked. `startQrScan` uses `getUserMedia` +
+  `BarcodeDetector`/jsQR; it degrades to a "camera unavailable" message,
+  never throws.
+- Sync: `syncOut()` (host) sends the **whole** state
+  `{t:"s", rd, ph, it:[[id,text,slot]], tm, res}` on every change — cheap
+  and self-healing. `applyMirrorState()` (mirror) rebuilds its DOM from it.
+  The secret word is never sent; the mirror has no Peek and no controls.
+- The mirror also takes a Wake Lock while `tm != null` (a round running).
+- Quit on the host keeps the link (mirror returns to "waiting"); Quit on
+  the mirror tears the link down. The link is not deployed-testable —
+  verify with two tabs (`BroadcastChannel` bridge) plus real phones for
+  the camera scan.
 
 ## Landscape / rotation
 
