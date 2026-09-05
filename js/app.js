@@ -91,6 +91,11 @@
   // mode all 6 are on the one screen.
   const HOST_SPLIT = 3;
 
+  // "They got it!" ignores taps for this long after a round starts, so a
+  // double-tap on Start can't roll straight through and end the game.
+  const GOTIT_ARM_MS = 800;
+  let gotitArmAt = 0;
+
   /* ---------- boot ---------- */
 
   els.versionBadge.textContent = APP_VERSION;
@@ -305,12 +310,14 @@
     els.tmReminder.hidden = true;
     acquireWakeLock(); // keep the screen on while the phone sits on the table
     Game.startTimer(onTick, onRoundEnd);
+    gotitArmAt = Date.now() + GOTIT_ARM_MS;
     updateControls();
+    setTimeout(updateControls, GOTIT_ARM_MS + 40); // arm "They got it!" once the delay passes
     syncOut();
   });
 
   els.btnGotit.addEventListener("click", () => {
-    if (Game.getPhase() !== "running") return;
+    if (Game.getPhase() !== "running" || els.btnGotit.disabled) return;
     Game.win();
     releaseWakeLock();
     GameAudio.win();
@@ -468,7 +475,10 @@
     els.mirrorRound.textContent = s.rd;
     els.mirrorTimer.textContent = s.tm == null ? Game.ROUND_SECONDS : s.tm;
     els.mirrorTimer.classList.toggle("low", s.tm != null && s.tm <= 10);
-    if (s.tm != null) acquireWakeLock(); else releaseWakeLock();
+    // Nobody touches the mirror phone, so keep it awake the whole game, not
+    // just during the countdown (a sleep between rounds was one way its
+    // screen went stale).
+    acquireWakeLock();
 
     els.mirrorTrack.innerHTML = "";
     for (let i = HOST_SPLIT; i < HintScale.SLOTS; i++) {
@@ -668,7 +678,12 @@
     });
   });
 
-  /* ---- GameLink events ---- */
+  /* ---- GameLink events + keep-alive ---- */
+
+  let linkSyncTimer = null;  // host: re-broadcast full state on a loop
+  let linkWatchTimer = null; // both: notice a silent stall
+  let linkLastRx = 0;        // last time we heard from the peer
+  let linkHealthy = false;   // peer is actively talking to us
 
   GameLink.on("state", (st) => {
     if (st === "connected" && !linkConnected) {
@@ -681,6 +696,11 @@
   });
 
   GameLink.on("message", (msg) => {
+    linkLastRx = Date.now();
+    if (!linkHealthy) { linkHealthy = true; updateLinkPill(true); }
+    if (!msg || typeof msg !== "object") return;
+    if (msg.t === "p") { GameLink.send({ t: "q" }); return; } // ping -> pong
+    if (msg.t === "q") return;                                // pong
     if (mode === "mirror") applyMirrorState(msg);
   });
 
@@ -691,7 +711,10 @@
     document.body.classList.toggle("ms-host", mode === "host");
     document.body.classList.toggle("ms-mirror", mode === "mirror");
     refreshMultiscreenBtn();
+    linkLastRx = Date.now();
+    linkHealthy = true;
     updateLinkPill(true);
+    startLinkWatch();
     if (mode === "mirror") {
       els.mirrorWait.hidden = false;
       els.mirrorGame.hidden = true;
@@ -700,17 +723,36 @@
     } else {
       renderScale();
       syncOut();
+      // Re-send the whole state every 2s (tiny, idempotent) so the mirror
+      // self-heals from a dropped message or a brief screen sleep.
+      clearInterval(linkSyncTimer);
+      linkSyncTimer = setInterval(() => {
+        if (mode !== "host" || !GameLink.isOpen()) return;
+        syncOut();
+        GameLink.send({ t: "p" });
+      }, 2000);
     }
   }
 
+  function startLinkWatch() {
+    clearInterval(linkWatchTimer);
+    linkWatchTimer = setInterval(() => {
+      if (mode === "solo") { clearInterval(linkWatchTimer); return; }
+      if (Date.now() - linkLastRx > 6000 && linkHealthy) {
+        linkHealthy = false;
+        updateLinkPill(false);
+      }
+      if (mode === "mirror" && GameLink.isOpen()) GameLink.send({ t: "q" });
+    }, 2500);
+  }
+
   function onLinkDown() {
+    linkHealthy = false;
     updateLinkPill(false);
+    clearInterval(linkSyncTimer);
     if (mode === "mirror") {
       els.mirrorWaitText.textContent = "Lost the link — re-pair from Screen 1.";
-      els.mirrorGame.hidden = true;
-      els.mirrorEnd.hidden = true;
-      els.mirrorWait.hidden = false;
-      releaseWakeLock();
+      if (els.mirrorGame.hidden && els.mirrorEnd.hidden) els.mirrorWait.hidden = false;
     }
   }
 
@@ -720,16 +762,20 @@
     els.linkPill.classList.toggle("down", !up);
     els.linkPillText.textContent = up
       ? (mode === "host" ? "Screen 2 linked" : "linked")
-      : "reconnect…";
+      : "reconnecting…";
   }
 
   function teardownLink() {
+    clearInterval(linkSyncTimer);
+    clearInterval(linkWatchTimer);
     GameLink.close();
     linkConnected = false;
+    linkHealthy = false;
     mode = "solo";
     document.body.classList.remove("ms-host", "ms-mirror");
     els.linkPill.hidden = true;
     els.screen2Strip.hidden = true;
+    releaseWakeLock();
   }
 
   /* ---------- controls / status render ---------- */
@@ -739,10 +785,11 @@
     const running = phase === "running";
     els.btnPeek.disabled = false;
     els.btnDeal.disabled = phase !== "deal";
-    els.btnStart.hidden = running;
-    // Not while a hint is still "in hand" mid-rearrange.
-    els.btnStart.disabled = phase !== "ready" || !!pending;
+    // Start stays in its slot the whole game (greyed while a round runs) so
+    // "They got it!" never appears where a thumb just tapped Start.
+    els.btnStart.disabled = phase !== "ready" || !!pending || running;
     els.btnGotit.hidden = !running;
+    els.btnGotit.disabled = !running || Date.now() < gotitArmAt;
 
     let msg = "";
     if (phase === "deal") msg = `Round ${Game.getRound()} — deal two hints.`;
@@ -809,8 +856,12 @@
     } else {
       Game.resume();
       // Wake locks drop when the page is hidden — take it again if a round
-      // is still running.
-      if (Game.getPhase() === "running") acquireWakeLock();
+      // is still running, or always on the mirror (it's a passive display).
+      if (Game.getPhase() === "running" || mode === "mirror") acquireWakeLock();
+      // Coming back from a sleep, the mirror may have missed messages — the
+      // host's 2s re-sync fixes it, but nudge for an immediate refresh too.
+      if (mode === "mirror" && GameLink.isOpen()) GameLink.send({ t: "q" });
+      if (mode === "host" && GameLink.isOpen()) syncOut();
     }
   });
 })();

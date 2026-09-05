@@ -83,8 +83,10 @@
       <button id="btn-peek" class="tm-btn">Peek word</button>
       <button id="btn-deal" class="tm-btn">Deal hints</button>
       <button id="btn-start" class="tm-btn tm-btn-go" disabled>Start 40s</button>
-      <button id="btn-gotit" class="tm-btn tm-btn-win" hidden>They got it!</button>
     </div>
+
+    <!-- Its own row, away from Start, so a double-tap on Start can't hit it. -->
+    <button id="btn-gotit" class="btn-gotit" hidden>They got it! &mdash; end the game</button>
   </section>
 
   <!-- MIRROR (second screen: display only, no controls) -->

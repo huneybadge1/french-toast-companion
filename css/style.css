@@ -378,7 +378,30 @@ html, body {
 .tm-btn[hidden] { display: none; }
 
 .tm-btn-go { background: var(--accent); border-color: var(--accent); color: #241a0c; }
-.tm-btn-win { background: var(--safe-green); border-color: var(--safe-green); color: #08210f; }
+
+/* "They got it!" — its own full-width row, well clear of the Start button,
+   so a stray second tap after Start lands on nothing. It also arms with a
+   short delay after the round begins (JS), shown here as the disabled look. */
+.btn-gotit {
+  width: 100%;
+  margin-top: 4px;
+  background: var(--safe-green);
+  border: 2px solid var(--safe-green);
+  color: #08210f;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: clamp(0.95rem, 2.6vw, 1.3rem);
+  padding: 16px 10px;
+  min-height: 58px;
+}
+.btn-gotit:active { filter: brightness(0.9); }
+.btn-gotit[hidden] { display: none; }
+.btn-gotit:disabled {
+  background: var(--bg-elevated);
+  border-color: var(--text-dim);
+  color: var(--text-dim);
+  opacity: 0.6;
+}
 
 /* ---------- End screens ---------- */
 .end-emoji { font-size: 3.6rem; margin-bottom: 6px; }
@@ -613,6 +636,7 @@ html, body {
   }
   .timer { font-size: clamp(1.8rem, 7vw, 3rem); }
   .tm-btn { min-height: 46px; padding: 10px 4px; }
+  .btn-gotit { min-height: 48px; padding: 12px 8px; margin-top: 2px; }
   .scale { padding: 8px; border-radius: 16px; gap: 7px; }
   .scale-spectrum { height: 7px; }
   .scale-end { font-size: clamp(0.85rem, 3vw, 1.3rem); padding: 4px 10px; }

@@ -115,6 +115,13 @@ on `body` (`background-attachment: fixed`). Custom toast-slice app icon
   subpath. `serve.ps1` / `.claude/launch.json` — local dev only, not
   deployed (`.claude/` is gitignored).
 
+## "They got it!" placement
+
+`#btn-gotit` is its **own full-width row** below `.tm-controls` (not swapped
+into the Start button's slot) and stays disabled for `GOTIT_ARM_MS` (800 ms)
+after a round starts — a double-tap on Start used to roll straight through
+and end the game. Start stays visible-but-greyed while a round runs.
+
 ## Round flow
 
 Deal hints → keep one (shielded panel) → place it on a scale slot (may also
@@ -134,10 +141,16 @@ loss). First round only: a dismissible Toastmaster-side reminder to say
   `BarcodeDetector`/jsQR; it degrades to a "camera unavailable" message,
   never throws.
 - Sync: `syncOut()` (host) sends the **whole** state
-  `{t:"s", rd, ph, it:[[id,text,slot]], tm, res}` on every change — cheap
-  and self-healing. `applyMirrorState()` (mirror) rebuilds its DOM from it.
-  The secret word is never sent; the mirror has no Peek and no controls.
-- The mirror also takes a Wake Lock while `tm != null` (a round running).
+  `{t:"s", rd, ph, it:[[id,text,slot]], tm, res}` on every change AND on a
+  2 s loop (idempotent, tiny) so the mirror self-heals from a missed
+  message or a brief sleep. `applyMirrorState()` (mirror) rebuilds its DOM
+  from it. The secret word is never sent; the mirror has no Peek/controls.
+- Keep-alive: host sends `{t:"p"}` on the loop, mirror replies `{t:"q"}`;
+  `linkWatchTimer` (2.5 s) flips the pill to "reconnecting…" after 6 s of
+  silence without blanking the screen. `onLinkDown` (channel actually
+  closed) keeps the last state visible.
+- The mirror holds a Wake Lock the whole time it's in a game (nobody
+  touches that phone), not just during the countdown.
 - Quit on the host keeps the link (mirror returns to "waiting"); Quit on
   the mirror tears the link down. The link is not deployed-testable —
   verify with two tabs (`BroadcastChannel` bridge) plus real phones for
