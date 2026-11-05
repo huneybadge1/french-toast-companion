@@ -22,8 +22,8 @@
     });
   }
 
-  GameData.load().then(() => {
-    const counts = GameData.counts();
+  PasswordData.load().then(() => {
+    const counts = PasswordData.counts();
     $("pw-load-status").textContent = `${counts.basic} basic · ${counts.advanced} advanced words · works offline`;
     $("pw-start").disabled = false;
   }).catch(() => {
@@ -56,7 +56,7 @@
       names: [0, 1].map((i) => $("pw-team-" + i).value.trim() || `Team ${i + 1}`),
       deck: $("pw-deck").value,
       firstTeam: first === "random" ? Math.floor(Math.random() * 2) : Number(first),
-      drawWord: GameData.drawSecret
+      drawWord: PasswordData.drawWord
     });
     $("pw-setup").hidden = true;
     $("pw-match").hidden = false;

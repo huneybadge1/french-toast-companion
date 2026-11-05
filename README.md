@@ -39,8 +39,8 @@ and guesses and record the outcome on the shared phone.
 - Both teams swap clue-giver and guesser between words.
 - Undo reverses the last turn, award, or word transition, including a win.
 
-Password uses the Basic or Advanced word deck and supports either screen
-orientation. Scores and game progress last for the current page session.
+Password has its own Basic and Advanced word decks, each mixing nouns,
+verbs, and adjectives. It supports either screen orientation. Scores and game progress last for the current page session.
 
 ## Play / install
 
@@ -76,17 +76,35 @@ worker cache derive their version from that file. GitHub Pages serves
 Password's scoring and state transitions have no dependencies:
 
 ```sh
-node --test tests/password-game.test.cjs
+node --test tests/*.test.cjs
 ```
 
 When testing French Toast, silence `GameAudio.buzzer` and `GameAudio.win`
 before triggering sound in a quiet environment. Verify a complete round,
 the Password penalties and privacy reveal, and offline play after edits.
 
-## Word bank
+## Word banks
 
-`french-toast-words.json` contains `secretWords.basic`,
-`secretWords.advanced` (single-noun words), and `hints` (adjectives).
-Original lists, not copied from the retail game. Both games draw from the
-shared word decks, avoiding session repeats until a deck is exhausted.
-The sorted arrays are easy to extend.
+The games have independent data files and draw histories:
+
+- **French Toast:** `french-toast-words.json` contains 315 Basic and 315
+  Advanced secret nouns, plus 150 adjective hints. It is loaded only by
+  `js/data.js` on the French Toast page.
+- **Password:** `password-words.json` contains 300 Basic and 300 Advanced
+  passwords. Each deck has 100 nouns, 100 verbs, and 100 adjectives,
+  organized under `decks.basic` / `decks.advanced` with `nouns`, `verbs`,
+  and `adjectives` arrays. `js/password-data.js` loads only this bank.
+
+Password's original selection favors recognizable words with several
+spoken clue routes: synonyms, opposites, associations, contexts, or
+multiple meanings. Basic words have familiar direct associations;
+Advanced words invite more indirect associations and abstract meanings.
+It includes a small selection of suitable French Toast nouns, alongside
+its own new choices. No retail deck or show word list was copied.
+
+Both banks are bundled for offline play. Password shuffles all parts of
+speech together and deals every word once per deck before reshuffling,
+retaining that history across matches until the page is reloaded. It also
+avoids immediately repeating the last word at a reshuffle. Keep additions
+lowercase, single-word, sorted, and unique across Password's two decks.
+Editing one game's bank does not change the other game's word pool.

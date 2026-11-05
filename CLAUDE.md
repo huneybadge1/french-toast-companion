@@ -11,8 +11,19 @@ French Toast screens, not on the picker. The French Toast mechanics and
 two-screen transport below still apply to that mode.
 
 Password lives in `password.html`, `js/password-game.js` (rules/state),
-and `js/password-app.js` (UI). It uses the shared `GameData` word bank and
-CSS, has its own setup, and works in either orientation. Precache all of
+and `js/password-app.js` (UI). It shares CSS, has its own setup, and
+works in either orientation. As of v8, **Password owns a separate bank**:
+`password-words.json`, loaded by `js/password-data.js` (`PasswordData`).
+Do not reconnect Password to French Toast's `GameData` or bank. Its 600
+curated passwords are split into Basic/Advanced decks, each with 100
+nouns, 100 verbs, and 100 adjectives. Store additions under
+`decks.<basic|advanced>.<nouns|verbs|adjectives>` as sorted, unique lowercase
+single words. Favor familiar words with multiple clue associations over
+specialist trivia. The parts of speech indicate a primary sense; some
+words have multiple uses. All categories are shuffled together. Each deck
+exhausts before reshuffling, keeps draw history across matches during the
+page session, and prevents immediate repeats at a cycle boundary.
+French Toast's bank and draw logic remain independent. Precache all of
 these files in `sw.js`. Cache names now start `word-night-`; activation
 removes obsolete `french-toast-` and `word-night-` caches while preserving
 unrelated caches on the origin.
@@ -35,7 +46,7 @@ shared-device play, with no sounds. Undo restores a turn, score, word
 transition, or win; rapid taps are guarded. Wake Lock is held during an
 active match when supported. Match state is in memory only.
 
-Run `node --test tests/password-game.test.cjs` and browser checks of both
+Run `node --test tests/*.test.cjs` and browser checks of both
 games, secret privacy, small-screen layouts, and offline navigation before
 deploying. The current environment has Node/Python; old machine-specific
 notes below are historical.
