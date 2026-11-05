@@ -8,6 +8,7 @@ const PasswordGame = (() => {
     let state = {
       names: names.slice(0, 2), deck, scores: [0, 0], wordNumber: 0,
       firstTeam: firstTeam === 1 ? 1 : 0,
+      starter: firstTeam === 1 ? 1 : 0, lastCorrectTeam: null, chooser: null,
       team: 0, value: MAX_VALUE, phase: "result", word: "", result: null, winner: null
     };
     const copy = (value) => JSON.parse(JSON.stringify(value));
@@ -19,17 +20,39 @@ const PasswordGame = (() => {
       if (!word) throw new Error("The selected word deck is empty.");
       if (state.wordNumber) remember();
       state.wordNumber += 1;
-      state.team = (state.firstTeam + state.wordNumber - 1) % 2;
+      // Only the trailing team chooses play/pass. A tie returns the opening
+      // turn to the most recent correct guesser; if no one has solved a word
+      // yet, retain the preceding starter (the setup choice for word one).
+      state.chooser = state.scores[0] === state.scores[1]
+        ? null : state.scores[0] < state.scores[1] ? 0 : 1;
+      state.team = state.chooser === null
+        ? (state.lastCorrectTeam === null ? state.starter : state.lastCorrectTeam)
+        : state.chooser;
       state.value = MAX_VALUE;
       state.word = word;
       state.result = null;
       state.winner = null;
+      state.phase = state.chooser === null ? "playing" : "choice";
+      if (state.chooser === null) state.starter = state.team;
+      return true;
+    }
+
+    function chooseStart(choice) {
+      if (state.phase !== "choice" || !["play", "pass"].includes(choice)) return false;
+      remember();
+      const chooser = state.chooser;
+      state.team = choice === "play" ? chooser : 1 - chooser;
+      state.starter = state.team;
+      state.chooser = null;
       state.phase = "playing";
+      state.result = { kind: choice, team: chooser, points: 0 };
+      // Choosing to pass is not a missed turn: the word is still worth six.
       return true;
     }
 
     function finish(kind, team, points) {
       if (team !== null) state.scores[team] += points;
+      if (kind === "correct") state.lastCorrectTeam = team;
       state.result = { kind, team, points };
       state.winner = state.scores.findIndex((score) => score >= TARGET);
       if (state.winner < 0) state.winner = null;
@@ -57,7 +80,7 @@ const PasswordGame = (() => {
     }
 
     nextWord();
-    return { record, nextWord, undo, getState: () => copy(state), canUndo: () => history.length > 0 };
+    return { record, nextWord, chooseStart, undo, getState: () => copy(state), canUndo: () => history.length > 0 };
   }
   return { create, TARGET, MAX_VALUE };
 })();

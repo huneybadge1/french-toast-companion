@@ -21,8 +21,13 @@ User-confirmed Password rules: two teams, one-word clues, one guess per
 turn, first to **15 or more**, **untimed**. Values fall **6→5→4→3→2→1**;
 wrong guesses and illegal clues consume the turn and pass play. Six misses
 end the word without points. Saying the password ends the word and
-awards the opposing team **2 points**, which may win the match. Alternate
-the starting team for each new word and remind both teams to swap roles.
+awards the opposing team **2 points**, which may win the match. Before
+new words, the trailing team chooses Play or Pass after privately seeing
+the word; either choice leaves it worth six. At tied scores, the most
+recent correct guesser's team starts again. If no correct guess has been
+made, retain the previous starter (setup's opening team for word one).
+Penalty awards do not replace the last correct guesser. Undo restores
+play/pass decisions as well as scores and turns. Remind both teams to swap roles.
 Players judge clues/answers aloud. Hold to reveal only for clue-givers;
 clear the displayed secret on release, cancellation, blur, backgrounding,
 and navigation. Never send it to another screen. Password is single

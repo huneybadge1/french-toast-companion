@@ -9,7 +9,7 @@
   let quitArmed = false;
   let wakeLock = null;
   let wakePending = false;
-  const actionButtons = ["pw-correct", "pw-wrong", "pw-illegal", "pw-said", "pw-next", "pw-again", "pw-undo"];
+  const actionButtons = ["pw-correct", "pw-wrong", "pw-illegal", "pw-said", "pw-next", "pw-again", "pw-undo", "pw-play", "pw-pass"];
   $("version-badge").textContent = APP_VERSION;
 
   if ("serviceWorker" in navigator) {
@@ -73,21 +73,29 @@
     for (const i of [0, 1]) {
       $("pw-name-" + i).textContent = s.names[i];
       $("pw-score-" + i).textContent = s.scores[i];
-      $("pw-card-" + i).classList.toggle("active", s.phase === "playing" && s.team === i);
+      $("pw-card-" + i).classList.toggle("active", ["playing", "choice"].includes(s.phase) && s.team === i);
       $("pw-card-" + i).classList.toggle("winner", s.winner === i);
     }
     const playing = s.phase === "playing";
+    const choosing = s.phase === "choice";
+    const unresolved = playing || choosing;
     $("pw-word-number").textContent = `Word ${s.wordNumber} · ${s.deck} deck · untimed`;
-    $("pw-playing").hidden = !playing;
-    $("pw-result").hidden = playing;
-    $("pw-answer").textContent = playing ? "" : s.word;
+    $("pw-playing").hidden = !unresolved;
+    $("pw-choice").hidden = !choosing;
+    $("pw-turn-actions").hidden = !playing;
+    $("pw-result").hidden = unresolved;
+    $("pw-answer").textContent = unresolved ? "" : s.word;
     $("pw-next").hidden = s.phase !== "result";
     $("pw-again").hidden = s.phase !== "won";
     $("pw-swap").hidden = s.phase === "won";
     $("pw-undo").disabled = !match.canUndo();
-    $("pw-turn").textContent = s.phase === "won" ? `${s.names[s.winner]} wins!` : playing ? `${s.names[s.team]}'s turn` : "Word complete";
-    $("pw-value").textContent = playing ? `${s.value} ${s.value === 1 ? "point" : "points"} at stake` : s.phase === "won" ? "First to 15 — match complete" : "";
+    $("pw-turn").textContent = s.phase === "won" ? `${s.names[s.winner]} wins!` : choosing ? `${s.names[s.chooser]}: play or pass?` : playing ? `${s.names[s.team]}'s turn` : "Word complete";
+    $("pw-value").textContent = unresolved ? `${s.value} ${s.value === 1 ? "point" : "points"} at stake` : s.phase === "won" ? "First to 15 — match complete" : "";
     let message = "Give one word as a clue. Your teammate gets one guess.";
+    if (choosing) message = "You're trailing. Your clue-giver may check the password, then choose who gives the first clue.";
+    else if (playing && !s.result && s.wordNumber > 1 && s.scores[0] === s.scores[1]) {
+      message = s.lastCorrectTeam === null ? "Scores tied. The previous starting team keeps the opening turn." : "Scores tied. The team that last guessed correctly starts again.";
+    }
     if (s.result) {
       const r = s.result;
       if (r.kind === "wrong") message = "Wrong guess. Play passes to the other team for one fewer point.";
@@ -95,6 +103,8 @@
       if (r.kind === "correct") message = `${s.names[r.team]} earns ${r.points} ${r.points === 1 ? "point" : "points"}.`;
       if (r.kind === "said") message = `Password said aloud. ${s.names[r.team]} earns 2 points.`;
       if (r.kind === "exhausted") message = "Six turns used. No points awarded for this word.";
+      if (r.kind === "play") message = `${s.names[r.team]} chose to play and gives the first clue.`;
+      if (r.kind === "pass") message = `${s.names[r.team]} passed. ${s.names[s.team]} gives the first clue for 6 points.`;
     }
     $("pw-message").textContent = message;
     if (s.phase === "won") releaseWakeLock();
@@ -123,6 +133,9 @@
     $("pw-" + action).addEventListener("click", () => act(() => match.record(action)));
   }
   $("pw-next").addEventListener("click", () => act(() => match.nextWord()));
+  for (const choice of ["play", "pass"]) {
+    $("pw-" + choice).addEventListener("click", () => act(() => match.chooseStart(choice)));
+  }
   $("pw-undo").addEventListener("click", () => act(() => match.undo()));
   $("pw-again").addEventListener("click", () => {
     if (Date.now() >= busyUntil) showSetup();
@@ -140,7 +153,7 @@
     $("pw-secret").textContent = "";
   }
   function showSecret(event) {
-    if (!match || match.getState().phase !== "playing") return;
+    if (!match || !["playing", "choice"].includes(match.getState().phase)) return;
     if (event.type === "pointerdown" && event.button !== 0) return;
     event.preventDefault();
     hideSecret();

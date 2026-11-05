@@ -31,8 +31,12 @@ and guesses and record the outcome on the shared phone.
 - After six unsuccessful turns (6, 5, 4, 3, 2, 1), the word ends without
   points and the answer is revealed.
 - Saying the password ends that word and gives the **opponents 2 points**.
-- The starting team alternates each new word. Both teams swap clue-giver
-  and guesser between words. Choose the initial team or randomize it.
+- Before each word, the trailing team privately checks the password and
+  chooses Play (start) or Pass (opponents start). The value stays at 6.
+- At tied scores, the team that last guessed correctly starts again. If
+  there has been no correct guess, retain the previous starter. Choose
+  the opening team at setup or randomize it.
+- Both teams swap clue-giver and guesser between words.
 - Undo reverses the last turn, award, or word transition, including a win.
 
 Password uses the Basic or Advanced word deck and supports either screen
