@@ -1,7 +1,7 @@
 {
-  "name": "French Toast",
-  "short_name": "French Toast",
-  "description": "Offline Toastmaster companion for the word game French Toast.",
+  "name": "Word Night",
+  "short_name": "Word Night",
+  "description": "In-person word games: French Toast and Password, together in one offline app.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

@@ -7,6 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     rotate: $("rotate-overlay"),
+    screenHome: $("screen-home"),
     screenSetup: $("screen-setup"),
     screenGame: $("screen-game"),
     screenWin: $("screen-win"),
@@ -130,11 +131,21 @@
   /* ---------- screen switching ---------- */
 
   function show(screen) {
-    [els.screenSetup, els.screenGame, els.screenWin, els.screenLoss, els.screenMirror].forEach((s) => (s.hidden = true));
+    [els.screenHome, els.screenSetup, els.screenGame, els.screenWin, els.screenLoss, els.screenMirror].filter(Boolean).forEach((s) => (s.hidden = true));
     screen.hidden = false;
     els.btnQuit.hidden = !(screen === els.screenGame || screen === els.screenMirror);
     disarmQuit();
+    checkOrientation();
   }
+
+  // Optional guards also allow an older cached HTML shell to finish updating.
+  if ($("btn-french-toast")) $("btn-french-toast").addEventListener("click", () => show(els.screenSetup));
+  if ($("btn-home")) $("btn-home").addEventListener("click", () => {
+    backToSetup();
+    teardownLink();
+    refreshMultiscreenBtn();
+    show(els.screenHome);
+  });
 
   /* ---------- setup ---------- */
 
@@ -840,7 +851,7 @@
 
   const portraitMq = window.matchMedia("(orientation: portrait)");
   function checkOrientation() {
-    const portrait = portraitMq.matches;
+    const portrait = portraitMq.matches && (!els.screenHome || els.screenHome.hidden);
     els.rotate.hidden = !portrait;
     if (portrait) Game.pause();
     else Game.resume();

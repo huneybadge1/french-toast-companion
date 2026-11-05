@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#1c1712" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="French Toast" />
-<title>French Toast</title>
+<meta name="apple-mobile-web-app-title" content="Word Night" />
+<title>Word Night</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 <link rel="icon" href="icons/favicon-32.png" />
@@ -23,20 +23,42 @@
 
 <main id="app">
 
+  <section id="screen-home" class="screen night-home">
+    <p class="night-eyebrow">Good company. A few good words.</p>
+    <h1 class="app-title">Word Night</h1>
+    <p class="subtitle">Pick a game. Pass the phone. Play together.</p>
+    <div class="night-games">
+      <button id="btn-french-toast" class="night-card">
+        <span class="night-card-tag">Work together</span>
+        <span class="night-card-title">French Toast</span>
+        <span class="night-card-copy">Place hints on the scale and guess the secret word.</span>
+        <span class="night-card-meta">Co-op &middot; 5 rounds &middot; 40 seconds</span>
+      </button>
+      <a class="night-card night-card-password" href="password.html">
+        <span class="night-card-tag">Team vs. team</span>
+        <span class="night-card-title">Password</span>
+        <span class="night-card-copy">One-word clues. One guess. Make every point count.</span>
+        <span class="night-card-meta">Two teams &middot; first to 15 &middot; untimed</span>
+      </a>
+    </div>
+    <p class="hint">One shared phone &middot; works offline after the first load</p>
+  </section>
+
   <!-- SETUP -->
-  <section id="screen-setup" class="screen">
+  <section id="screen-setup" class="screen" hidden>
+    <button id="btn-home" class="night-back">&larr; Word Night</button>
     <h1 class="app-title">French&nbsp;Toast</h1>
     <p class="subtitle">Toastmaster &mdash; choose a word source</p>
     <div class="setup-decks">
-      <button class="deck-btn" data-deck="basic">
+      <button class="deck-btn" data-deck="basic" disabled>
         <span class="deck-name">Basic</span>
         <span class="deck-sub">everyday words</span>
       </button>
-      <button class="deck-btn" data-deck="advanced">
+      <button class="deck-btn" data-deck="advanced" disabled>
         <span class="deck-name">Advanced</span>
         <span class="deck-sub">trickier words</span>
       </button>
-      <button class="deck-btn" data-deck="custom">
+      <button class="deck-btn" data-deck="custom" disabled>
         <span class="deck-name">Your own</span>
         <span class="deck-sub">type it in privately</span>
       </button>

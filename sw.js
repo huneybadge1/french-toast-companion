@@ -1,9 +1,10 @@
 importScripts("./js/version.js");
-const CACHE_VERSION = "french-toast-" + APP_VERSION;
+const CACHE_VERSION = "word-night-" + APP_VERSION;
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
+  "./password.html",
   "./manifest.json",
   "./css/style.css",
   "./js/version.js",
@@ -15,6 +16,8 @@ const PRECACHE_URLS = [
   "./js/vendor/qrcode.js",
   "./js/vendor/jsQR.js",
   "./js/app.js",
+  "./js/password-game.js",
+  "./js/password-app.js",
   "./french-toast-words.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -31,7 +34,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key)))
+      Promise.all(keys.filter((key) => /^(french-toast-|word-night-)/.test(key) && key !== CACHE_VERSION).map((key) => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
 });

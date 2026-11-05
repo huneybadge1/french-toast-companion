@@ -1,4 +1,42 @@
-# French Toast Companion — Project Notes
+# Word Night — Project Notes
+
+## Word Night / Password update (v6)
+
+The app is now **Word Night**, containing French Toast and Password. The
+repository and Pages URL remain `huneybadge1/french-toast-companion` so
+existing installations continue to update. `index.html` opens on a game
+picker; its French Toast button opens the original setup, and a Word
+Night back button returns to the picker. Rotation is required only on the
+French Toast screens, not on the picker. The French Toast mechanics and
+two-screen transport below still apply to that mode.
+
+Password lives in `password.html`, `js/password-game.js` (rules/state),
+and `js/password-app.js` (UI). It uses the shared `GameData` word bank and
+CSS, has its own setup, and works in either orientation. Precache all of
+these files in `sw.js`. Cache names now start `word-night-`; activation
+removes obsolete `french-toast-` and `word-night-` caches while preserving
+unrelated caches on the origin.
+
+User-confirmed Password rules: two teams, one-word clues, one guess per
+turn, first to **15 or more**, **untimed**. Values fall **6→5→4→3→2→1**;
+wrong guesses and illegal clues consume the turn and pass play. Six misses
+end the word without points. Saying the password ends the word and
+awards the opposing team **2 points**, which may win the match. Alternate
+the starting team for each new word and remind both teams to swap roles.
+Players judge clues/answers aloud. Hold to reveal only for clue-givers;
+clear the displayed secret on release, cancellation, blur, backgrounding,
+and navigation. Never send it to another screen. Password is single
+shared-device play, with no sounds. Undo restores a turn, score, word
+transition, or win; rapid taps are guarded. Wake Lock is held during an
+active match when supported. Match state is in memory only.
+
+Run `node --test tests/password-game.test.cjs` and browser checks of both
+games, secret privacy, small-screen layouts, and offline navigation before
+deploying. The current environment has Node/Python; old machine-specific
+notes below are historical.
+
+## French Toast mode
+
 
 Offline-first PWA. A single shared phone/tablet on the table replaces the
 physical bits of the indie word game *French Toast* (Jellybean Games): it
