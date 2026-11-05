@@ -14,11 +14,16 @@ Password lives in `password.html`, `js/password-game.js` (rules/state),
 and `js/password-app.js` (UI). It shares CSS, has its own setup, and
 works in either orientation. As of v8, **Password owns a separate bank**:
 `password-words.json`, loaded by `js/password-data.js` (`PasswordData`).
-Do not reconnect Password to French Toast's `GameData` or bank. As of v9,
-its 650 curated passwords favor Basic: **500 Basic** (170 nouns, 165 verbs,
-165 adjectives) and **150 Advanced** (50 of each). Familiar words like
+Do not reconnect Password to French Toast's `GameData` or bank. As of v10,
+its 850 curated passwords favor Basic: **700 Basic** (270 nouns, 225 verbs,
+205 adjectives) and **150 Advanced** (50 of each). Familiar words like
 thirsty, juggle, and thunder go in Basic; reserve Advanced for trickier
-associations and abstract vocabulary. Store additions under
+associations and abstract vocabulary. **User preference:** when unsure,
+err toward simple, familiar vocabulary and classify borderline familiar
+words as Basic. Expand Basic with genuinely new words; report additions
+separately from any reclassification. The v10 additions were checked
+against beginner web vocabulary sources; see `docs/password-sources.md`.
+Store additions under
 `decks.<basic|advanced>.<nouns|verbs|adjectives>` as sorted, unique lowercase
 single words. Favor familiar words with multiple clue associations over
 specialist trivia. The parts of speech indicate a primary sense; some

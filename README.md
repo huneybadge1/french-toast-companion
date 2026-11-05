@@ -90,19 +90,23 @@ The games have independent data files and draw histories:
 - **French Toast:** `french-toast-words.json` contains 315 Basic and 315
   Advanced secret nouns, plus 150 adjective hints. It is loaded only by
   `js/data.js` on the French Toast page.
-- **Password:** `password-words.json` contains 500 Basic and 150 Advanced
-  passwords. Basic has 170 nouns, 165 verbs, and 165 adjectives; Advanced
+- **Password:** `password-words.json` contains 700 Basic and 150 Advanced
+  passwords. Basic has 270 nouns, 225 verbs, and 205 adjectives; Advanced
   has 50 of each. The larger Basic deck favors everyday vocabulary.
   Words are organized under `decks.basic` / `decks.advanced` with `nouns`, `verbs`,
   and `adjectives` arrays. `js/password-data.js` loads only this bank.
 
-Password's original selection favors recognizable words with several
+Password's independently curated selection favors recognizable words with several
 spoken clue routes: synonyms, opposites, associations, contexts, or
 multiple meanings. Basic words have familiar direct associations;
 Advanced words invite more indirect associations and abstract meanings.
 Familiar words such as "thirsty," "juggle," and "thunder" belong in Basic.
+When uncertain, favor simpler vocabulary and place familiar borderline
+words in Basic.
 It includes a small selection of suitable French Toast nouns, alongside
-its own new choices. No retail deck or show word list was copied.
+its own new choices. Basic also includes additions from web vocabulary
+research; see [sources and selection notes](docs/password-sources.md).
+No retail deck or show word list was copied.
 
 Both banks are bundled for offline play. Password shuffles all parts of
 speech together and deals every word once per deck before reshuffling,
